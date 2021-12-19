@@ -1,6 +1,9 @@
 service: serverless-stepf-cloudwatch-trigger
 frameworkVersion: '2'
 
+plugins:
+  - serverless-step-functions
+
 provider:
   name: aws
   runtime: nodejs12.x
@@ -11,3 +14,38 @@ provider:
 functions:
   handler:
     handler: functions/handler.handler
+
+stepFunctions:
+  stateMachines:
+    cloudWatchEventTrigger:
+      name: cloudwatch-event-trigger
+      events:
+        - schedule: rate(1 minute) # executes state machine with no execution input (only includes metadata)
+        # - schedule: # executes state machine every 1 minute with execution input ({"foo":"bar"})
+        #     rate: rate(1 minute)
+        #     input:
+        #       foo: bar
+        # - cloudwatchEvent: # executes state machine when a file is uploaded to a specific S3 bucket
+        #     event:
+        #       source:
+        #         - aws.s3
+        #       detail-type:
+        #         - AWS API Call via CloudTrail
+        #       detail:
+        #         eventSource:
+        #           - s3.amazonaws.com
+        #         eventName:
+        #           - PutObject
+        #         requestParameters:
+        #           bucketName:
+        #             - step-functions-cloudwatch-event-test
+
+      definition:
+        Comment: Demonstrate how CloudWatch Event integration works
+        StartAt: DoSomething
+        States:
+          DoSomething:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [handler, Arn]
+            End: true
